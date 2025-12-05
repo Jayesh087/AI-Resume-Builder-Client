@@ -15,23 +15,31 @@ const App = () => {
 
   const dispatch = useDispatch()
 
-  const getUserData = async () => {
-    const token = localStorage.getItem('token')
+    const getUserData = async () => {
+    const token = localStorage.getItem('token');
     try {
-      if(token){
-        const { data } = await api.get('/api/users/data', {headers: {Authorization: token}})
-        if(data.user){
-          dispatch(login({token, user: data.user}))
+      if (token) {
+        // Set default Authorization header for axios (so all requests use it)
+        api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+
+        const { data } = await api.get('/api/users/data');
+        if (data.user) {
+          // dispatch user + token into redux
+          dispatch(login({ token, user: data.user }));
         }
-        dispatch(setLoading(false))
-      }else{
-        dispatch(setLoading(false))
+        dispatch(setLoading(false));
+      } else {
+        dispatch(setLoading(false));
       }
     } catch (error) {
-      dispatch(setLoading(false))
-      console.log(error.message)
+      dispatch(setLoading(false));
+      console.log('getUserData error:', error?.response?.data || error.message);
+      // If token invalid, clear it
+      localStorage.removeItem('token');
+      api.defaults.headers.common['Authorization'] = '';
     }
   }
+
 
   useEffect(()=>{
     getUserData()
